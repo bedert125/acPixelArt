@@ -1,0 +1,37 @@
+.viewer{
+    display: table;
+    width: 100%;
+}
+
+.viewer > div {
+    display: table-row;
+    width: 50%;
+    vertical-align: top
+}
+
+.viewer > div >div {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top
+}
+
+
+.original-image img{
+    max-width: 300px;
+    max-height: 300px;
+    border: 2px solid;
+}
+
+.pixel-image canvas{
+    border: 2px solid red;
+}
+
+.viewer .palette > div {
+    width: 50px;
+    border: 1px solid;
+    display: inline-block;
+}
+
+.viewer .palette > div span{
+    display: block;
+}

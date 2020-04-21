@@ -7,56 +7,121 @@
     <script src="js/plugins/jquery-3.5.0.min.js"></script>
     <script src="js/plugins/rgbquant.js"></script>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+    <link rel='stylesheet' href='http://fonts.googleapis.com/css?family=Roboto:400,700'>
+
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.9/angular-material.min.css">
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular-animate.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular-aria.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular-messages.min.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.10/angular-material.min.js"></script>
+
     <script src="js/plugins/ng-file-upload-all.min.js"></script>
 
 </head>
 
-<body ng-controller="mainController">
-    <div class="viewer" pixeling="originalImage">
-        <div class="viewer-header">
-            <div>
-                Original Image
-                <br>
-                <label>
-                    <input type="file" id="file" class="input-text" ngf-change="onChange($files)" ngf-select
-                        ng-model="picFile" name="attachement" accept="image/png, image/jpeg, image/jpg" />
-                    <!-- <input type="file" fileread="ctrl.sourceImage"> -->
-                </label>
-            </div>
-            <div>
-                <span>
-                    <!-- {{pixelData}} -->
-                </span>
-            </div>
+<body ng-controller="mainController" layout="column">
+    <div class="loader">
+        <div id="loaderText">
+            Loading...
         </div>
-        <div class="viewer-body">
-            <div class="original-image panel">
-                <div class="panel-body">
-                    <img ngf-src="picFile" id="originalImage" style="display: none">
-                    <canvas width="300" height="300" ng-style="originalStyle" id="originalImageCanvas"></canvas>
-
-                </div>
-            </div>
-            <div class="pixel-image panel">
-                <div>
-                    <canvas width="300" height="300" id="pixelArt"></canvas>
-                </div>
-            </div>
-        </div>
-        <div>
-            <div></div>
-            <div class="palette">
-                <div ng-repeat="itemP in palette" 
-                style="background: rgb({{itemP.rgb[0]}}, {{itemP.rgb[1]}}, {{itemP.rgb[2]}})">
-                <span>
-                    {{itemP.position}}
-                </span>
-                </div>
-            </div>
-        </div>
-
     </div>
+    <md-toolbar>
+        <div class="md-toolbar-tools">
+            <h2 class="md-flex">Animal Crossing Pixel Art</h2>
+        </div>
+    </md-toolbar>
+    <md-content pixeling="originalImage" flex layout-padding>
+        <div class="viewer" layout="column" flex>
+            <div class="viewer-header" layout="row" flex>
+                <div flex="50">
+                    Original Image
+                    <br>
+                    <label>
+                        <input type="file" id="file" class="input-text" ngf-change="onChange($files)" ngf-select
+                            ng-model="picFile" name="attachement" accept="image/jpeg, image/jpg" />
+                        <!-- <input type="file" fileread="ctrl.sourceImage"> -->
+                    </label>
+                </div>
+                <div flex="50">
+                    <span>
+                        <md-button ng-click="newPixels()" class="md-raised md-primary">Update</md-button>
+                        <!-- {{pixelData}} -->
+                    </span>
+                </div>
+            </div>
+            <div class="viewer-body" layout="row" flex>
+                <div class="original-image panel" flex="50">
+                    <div class="panel-body">
+                        <img ngf-src="picFile" id="originalImage" style="display: none">
+                        <canvas width="300" height="300" ng-style="originalStyle" id="originalImageCanvas"></canvas>
+
+                    </div>
+                </div>
+                <div class="pixel-image panel" flex="50">
+                    <div>
+                        <canvas width="300" height="300" id="pixelArt"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <md-progress-linear md-mode="determinate" value="{{pixelData.process}}"></md-progress-linear>
+
+        <div class="color-panel" layout="column" flex>
+            <div class="palette">
+                <div ng-repeat="itemP in palette">
+                    <span>
+                        {{$index+1}}
+                    </span>
+
+                    <div class="color-bar"
+                        style="background: rgb({{itemP.rgb[0]}}, {{itemP.rgb[1]}}, {{itemP.rgb[2]}})">
+                    </div>
+                    <div class="color-position">
+                        <div>
+                            <span>A</span>
+                            <span> {{itemP.position[0]}}</span>
+                        </div>
+                        <div>
+                            <span>B</span>
+                            <span> {{itemP.position[1]}}</span>
+                        </div>
+                        <div>
+                            <span>C</span>
+                            <span> {{itemP.position[2]}}</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div ng-if="palette" class="color-map" ng-class="{'no-colors':!controls.showColors}">
+            <div class="controls" layout="row" flex>
+                <md-switch ng-model="controls.showColors" flex="20">
+                    <span>Show Colos</span>
+                </md-switch>
+                <br>
+                <md-slider-container flex="80">
+                    <span>Guides each</span>
+                    <md-slider min="2" max="16" md-discrete ng-model="controls.guide"></md-slider>
+                </md-slider-container>
+            </div>
+            <div ng-repeat="row in bitMap track by $index" class="color-row"
+                ng-class="{'guide-top': controls.isGuide($index)}">
+                <div ng-repeat="color in row track by $index" class="color-cell"
+                    ng-class="{'guide-left': controls.isGuide($index)}"
+                    style="background: rgb({{palette[color].rgb[0]}}, {{palette[color].rgb[1]}}, {{palette[color].rgb[2]}})">
+                    {{color}}
+                </div>
+            </div>
+        </div>
+
+    </md-content>
 
     <script src="js/app.js"></script>
 </body>

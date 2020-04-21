@@ -1,6 +1,13 @@
 var app = angular.module("PixArtApp", [
-    'ngFileUpload'
+    'ngFileUpload',
+    'ngMaterial'
 ]);
+
+app.config(function ($mdThemingProvider) {
+    $mdThemingProvider.theme('default')
+        .primaryPalette('pink')
+        .accentPalette('orange');
+});
 
 app.controller("mainController", function IndexController($scope) {
     var ctrl = this;
@@ -14,7 +21,7 @@ app.controller("mainController", function IndexController($scope) {
 })
 
 
-app.directive("pixeling", ["$timeout", function ($timeout) {
+app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interval) {
     return {
         link: function (scope, element, attributes, ctrls) {
             'use strict';
@@ -27,6 +34,14 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                 document.getElementById(idImage));
 
             var domImage = imageElement[0];
+
+            scope.controls={
+                showColors: true,
+                guide: 16,
+                isGuide : function(index){
+                    return ((index +1) % scope.controls.guide) === 0;
+                }
+            }
 
             var imageData = {
                 w: 0,
@@ -55,8 +70,21 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
 
 
             scope.pixelData = imageData;
-
             function drawGrid() {
+                lock()
+                setTimeout(drawGridInner, 10);
+            }
+
+            function drawGridInner() {
+
+                // var processing = $interval(function () {
+                //     console.log(imageData.process)
+                //     scope.loadingProcess = imageData.process;
+                // }, 500);
+
+                // var loaderText = document.getElementById("loaderText")
+
+
                 var x, y;
                 var step = imageData.gridSize;
                 var hg = imageData.result.h * imageData.gridSize;
@@ -95,11 +123,16 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                         // ctx.lineTo(wg, yg);
                         // ctx.stroke();
                         current++;
-                        console.log(((current / max) * 100) + "% (" + current + "/" + max)
+                        imageData.process = (current / max) * 100
+
+                        // loaderText.innerText = imageData.process + "%"
+
+                        // console.log(((current / max) * 100) + "% (" + current + "/" + max)
 
                     }
                 }
 
+                // processing && $interval.cancel(processing);
 
                 $timeout(rgbQuant, 10)
                 // console.log(imageData)
@@ -145,11 +178,12 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                 var rgb = 'rgb(' + sum[0] + ', ' + sum[1] +
                     ', ' + sum[2] + ')';
                 // console.log(rgb)
-                return rgb;
+                return sum;
             }
 
-            function pick(x, y, type) {
-                var pixel = ctxImg.getImageData(x, y, 1, 1);
+            function pick(x, y, type, ctxLocal) {
+                ctxLocal = ctxLocal || ctxImg;
+                var pixel = ctxLocal.getImageData(x, y, 1, 1);
                 var data = pixel.data;
                 // var rgba = data[0] + ', ' + data[1] +
                 //     ', ' + data[2];
@@ -195,9 +229,14 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                 // var newColor = getModa(colors);
                 var newColor = getMedia(colors);
 
+                var rgb = 'rgb(' + newColor[0] + ', ' + newColor[1] +
+                    ', ' + newColor[2] + ')';
+
                 // var rgbColor = newColor.split(",")
                 //  console.log(start, end,newColor)
-                ctx.fillStyle = newColor;
+                ctx.fillStyle = rgb;
+
+                return newColor;
 
             }
 
@@ -209,7 +248,7 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                 imageData.w = img.width;
 
 
-                scope.originalStyle = {}
+                var originalStyle = {}
 
                 canvasImg.width = imageData.w;
                 canvasImg.height = imageData.h;
@@ -226,17 +265,15 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                 var cipMax = (pixelSize * imageData.result.w);
 
                 if (max == imageData.w) {
-                    scope.originalStyle.width = canvas.width < imageData.w ? canvas.width : imageData.w;
-
-
+                    canvasImg.style.width = canvas.width < imageData.w ? canvas.width : imageData.w;
                 } else {
-                    scope.originalStyle.width = "";
+                    canvasImg.style.width = "";
                 }
 
                 if (max == imageData.h) {
-                    scope.originalStyle.height = canvas.width < imageData.h ? canvas.height : imageData.h;
+                    canvasImg.style.height = canvas.width < imageData.h ? canvas.height : imageData.h;
                 } else {
-                    scope.originalStyle.height = "";
+                    canvasImg.style.height = "";
                 }
 
 
@@ -299,26 +336,49 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                     imageData.clip.y1 = y;
                     imageData.clip.y2 = y + clipOriginal.size;
 
-                    console.log(imageData.clip)
+                    // console.log(imageData.clip)
                     clippingImage()
                 })
             })
 
+            scope.newPixels = function () {
+                $timeout(drawGrid)
+            }
+
             $(canvasImg).on("mouseup", function () {
 
                 $(canvasImg).off("mousemove")
-                $timeout(drawGrid, 10)
+
+                // $timeout(drawGrid, 10)
+
+
+
             })
 
             img.onload = function () {
 
+                lock();
+
+                setTimeout(function () {
+                    drawOriginal();
+                    // $timeout(drawOriginal, 5);
+                    $timeout(drawGrid, 10);
+                }, 0);
                 // img.style.display = 'none';
-                $timeout(drawOriginal, 5)
-                $timeout(drawGrid, 10)
 
 
                 // drawPixelArt();
             };
+
+
+
+            function lock() {
+                $("body").addClass("loading");
+            }
+
+            function unlock() {
+                $("body").removeClass("loading");
+            }
 
             function rgbQuant() {
 
@@ -344,16 +404,89 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                 var pal = q.palette(true);
                 var out = q.reduce(canvas);
 
+                // console.log(out)
                 scope.palette = [];
+
+                var paletteMap = {}
+
                 for (var i = 0; i < pal.length; i++) {
-                    debugger
+
                     var np = getAnimalCrColor(pal[i]);
                     scope.palette.push(np)
+                    paletteMap[pal[i].join(",")] = i;
                 }
 
-                // console.log(pal)
-                // console.log(out)
 
+                var DAT = drawPixels(out, canvas.width);
+                // var DAT = new ImageData(out, canvas.width, canvas.height); 
+
+                ctx.putImageData(DAT, 0, 0);
+
+                 
+                    findColors(paletteMap);
+                    // console.log(pal)
+                    // console.log(out)
+
+                    unlock();
+              
+
+            }
+
+
+            function findColors(paletteMap) {
+                debugger
+                var mapImage = [];
+                var step = Math.floor(imageData.gridSize / 2);
+                for (var y = step; y < canvas.height; y += step) {
+                    var row = []
+                    for (var x = step; x < canvas.width; x += step) {
+                        var color = pick(x, y, "array", ctx);
+                        var num = paletteMap[color.join(",")];
+                        row.push(num);
+                    }
+                    mapImage.push(row)
+                }
+                scope.bitMap = mapImage;
+
+                console.log(mapImage)
+            }
+
+
+            function drawPixels(idxi8, width0, width1) {
+                var idxi32 = new Uint32Array(idxi8.buffer);
+
+                width1 = width1 || width0;
+
+                var can = document.createElement("canvas"),
+                    can2 = document.createElement("canvas"),
+                    ctx = can.getContext("2d"),
+                    ctx2 = can2.getContext("2d");
+
+                can.width = width0;
+                can.height = Math.ceil(idxi32.length / width0);
+                can2.width = width1;
+                can2.height = Math.ceil(can.height * width1 / width0);
+
+                ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = ctx.webkitImageSmoothingEnabled = ctx.msImageSmoothingEnabled = false;
+                ctx2.imageSmoothingEnabled = ctx2.mozImageSmoothingEnabled = ctx2.webkitImageSmoothingEnabled = ctx2.msImageSmoothingEnabled = false;
+
+                var imgd = ctx.createImageData(can.width, can.height);
+
+                // if (typeOf imgd.data  == "CanvasPixelArray") {
+                var data = imgd.data;
+                for (var i = 0, len = data.length; i < len; ++i)
+                    data[i] = idxi8[i];
+                // }
+                // else {
+                //     var buf32 = new Uint32Array(imgd.data.buffer);
+                //     buf32.set(idxi32);
+                // }
+
+                ctx.putImageData(imgd, 0, 0);
+
+                ctx2.drawImage(can, 0, 0, can2.width, can2.height);
+
+                return imgd;
             }
 
 
@@ -432,7 +565,7 @@ app.directive("pixeling", ["$timeout", function ($timeout) {
                     b = hue2rgb(p, q, h - 1 / 3);
                 }
 
-                return [r * 255, g * 255, b * 255];
+                return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
             }
 
 

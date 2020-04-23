@@ -53,11 +53,14 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                 guide: 16,
                 colors: 15,
                 isGuide: function (index) {
-                    return ((index + 1) % scope.controls.guide) === 0;
+                    
+                    return scope.controls.showGuides && ((index + 1) % scope.controls.guide) === 0;
                 },
                 onChangePixelSize: onChangePixelSize,
                 pixelSize: "",
-                maxPixelSize: 10
+                maxPixelSize: 10,
+                colorSelection: 1,
+                showGuides:true
             }
 
 
@@ -125,12 +128,13 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                 var xPadding = imageData.clip.x1 + 1;
                 var yPadding = imageData.clip.y1 + 1;
 
-                imageData.pixels = []
+                imageData.pixels = [];
+                var size = imageData.resultSize;
 
-                for (y = 0; y < imageData.resultSize; y++) {
+                for (y = 0; y < size; y++) {
                     var yg = y * imageData.gridSize;
                     var yp = (y * pixelSize) + yPadding;
-                    for (x = 0; x < imageData.resultSize; x++) {
+                    for (x = 0; x < size; x++) {
 
                         var xg = x * imageData.gridSize;
                         var xp = (x * pixelSize) + xPadding;
@@ -170,26 +174,7 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                 // canvas.height = imageData.gridSize * imageData.resultSize;
             }
 
-            function getModa(values) {
-                var sum = {};
-                for (var i = 0; i < values.length; i++) {
-                    var value = values[i]
-                    if (!sum[value]) {
-                        sum[value] = 0;
-                    }
-                    sum[value]++;
-                }
-                var max = -1;
-                var keyMax;
-                for (var key in sum) {
-                    if (max < sum[key]) {
-                        max = sum[key]
-                        keyMax = key;
-                    }
-                }
-                // console.log(sum)
-                return keyMax;
-            }
+
 
             function getMedia(values) {
                 var sum = [0, 0, 0];
@@ -456,10 +441,18 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                 return result;
             }
 
-            function getColorCorrection(color){
-                // return ImageUtil.computeAverageColor(color)
-                // return getMedian(color)
-                return getMedian2(color)
+            function getColorCorrection(color) {
+                var option = parseInt(scope.controls.colorSelection)
+                switch (option) {
+                    default:
+                    case 1:
+                        return ImageUtil.computeAverageColor(color);
+                    case 2:
+                        return getMedian(color)
+                    case 3:
+                        return getModa(color)
+
+                }
             }
 
             function paletteTable(pixelGroups) {
@@ -471,7 +464,7 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                     .sum()
                     .value();
 
-                pixelGroups = _.sortBy(pixelGroups, function (pg) { 
+                pixelGroups = _.sortBy(pixelGroups, function (pg) {
                     var correctColor = getColorCorrection(pg);
                     var hsl = ImageUtil.rgbToHsl(correctColor.red, correctColor.green, correctColor.blue);
                     return hsl[0];
@@ -502,7 +495,7 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                     // paletteTableString += "</td>";
                     // paletteTableString += "</tr>";
                 });
-                debugger
+
                 //     $(containerId).append("<table class=\"table\">" + paletteTableString + "</table");
                 //     $(containerId).show();
                 return palette;
@@ -540,20 +533,19 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
             }
 
 
-            function getMedian2(values){
-                var ordered = _.sortBy(values, function (val) {  
+            function getMedian(values) {
+                var ordered = _.sortBy(values, function (val) {
                     var hsl = ImageUtil.rgbToHsl(val.red, val.green, val.blue);
                     return hsl[0];
                 }).reverse();
 
                 var half = Math.floor(ordered.length / 2)
 
-                var median = ordered[half] || {red:NaN,green:NaN,blue:NaN}; 
+                var median = ordered[half] || { red: NaN, green: NaN, blue: NaN };
                 return median;
             }
 
-
-            function getMedian(values) {
+            function getModa(values) {
                 var count = {}
                 for (var i = 0; i < values.length; i++) {
                     var stringVal = ImageUtil.pixelToHexString(values[i]);
@@ -563,35 +555,72 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                     count[stringVal]++;
                 }
 
-
-                var arrayOrdered = []
+                var max = -1;
+                var keyMax;
                 for (var key in count) {
-                    arrayOrdered.push({
-                        color: key,
-                        num: count[key]
-                    })
+                    if (max < count[key]) {
+                        max = count[key]
+                        keyMax = key;
+                    }
                 }
 
-                arrayOrdered = _.orderBy(arrayOrdered, ['num'], ['asc']);
 
-                // console.log(arrayOrdered)
-                var half = Math.floor(arrayOrdered.length / 2)
-
-                var median = arrayOrdered[half];
-                if(median){
-                    median = HEX2RGB(median.color);
-                }else{
-                    median = [NaN,NaN,NaN]
+                if (keyMax) {
+                    keyMax = HEX2RGB(keyMax);
+                } else {
+                    keyMax = [NaN, NaN, NaN]
                 }
-                
+
 
                 // console.log(median)
                 return {
-                    red: median[0],
-                    green: median[1],
-                    blue: median[2]
+                    red: keyMax[0],
+                    green: keyMax[1],
+                    blue: keyMax[2]
                 }
+
             }
+
+
+            // function getMedian(values) {
+            //     var count = {}
+            //     for (var i = 0; i < values.length; i++) {
+            //         var stringVal = ImageUtil.pixelToHexString(values[i]);
+            //         if (!count[stringVal]) {
+            //             count[stringVal] = 0;
+            //         }
+            //         count[stringVal]++;
+            //     }
+
+
+            //     var arrayOrdered = []
+            //     for (var key in count) {
+            //         arrayOrdered.push({
+            //             color: key,
+            //             num: count[key]
+            //         })
+            //     }
+
+            //     arrayOrdered = _.orderBy(arrayOrdered, ['num'], ['asc']);
+
+            //     // console.log(arrayOrdered)
+            //     var half = Math.floor(arrayOrdered.length / 2)
+
+            //     var median = arrayOrdered[half];
+            //     if(median){
+            //         median = HEX2RGB(median.color);
+            //     }else{
+            //         median = [NaN,NaN,NaN]
+            //     }
+
+
+            //     // console.log(median)
+            //     return {
+            //         red: median[0],
+            //         green: median[1],
+            //         blue: median[2]
+            //     }
+            // }
 
             function rgbQuant() {
 
@@ -634,9 +663,11 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                     // paletteMap[stringColor] = i;
 
                     np.key = pal[i].hex;
+                    np.used = pal[i].used;
                     pal[i].colorNumber = i;
                     // paletteMap[np.key] = i;
                     scope.palette.push(np)
+
 
                 }
 
@@ -665,12 +696,14 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                 var size = imageData.resultSize;
                 var counter = {};
 
-                console.log(paletteMap)
 
                 for (var y = 0; y < size; y++) {
-                    var row = []
+                    var row = [];
+                    var yg = y * imageData.gridSize;
                     for (var x = 0; x < size; x++) {
-                        // var color = pick(x, y, "array", ctx);
+
+                        var xg = x * imageData.gridSize;
+
                         var pixelPos = (y * size) + x;
                         var color = imageData.pixels[pixelPos];
 
@@ -685,6 +718,9 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                             }
                         }
 
+                        ctx.fillStyle = colorGroup.hex;
+
+                        ctx.fillRect(xg, yg, imageData.gridSize, imageData.gridSize);
                         // var num = paletteMap[stringColor];
                         // if (!counter[stringColor]) {
                         //     counter[stringColor] = 0;

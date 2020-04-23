@@ -23,8 +23,8 @@
 
 
     <script src="js/plugins/ng-file-upload-all.min.js"></script>
-    <script src="js/plugins/FileSaver.min.js"></script> 
-     <script src="js/plugins/k-means-bundle.js"></script> 
+    <script src="js/plugins/FileSaver.min.js"></script>
+    <script src="js/plugins/k-means-bundle.js"></script>
     <!-- <script src="js/plugins/palettemaker/image-util.js"></script>
     <script src="js/plugins/palettemaker/kmeans-plotter.js"></script>
     <script src="js/plugins/palettemaker/kmeans-runner.js"></script>
@@ -32,7 +32,7 @@
 
 </head>
 
-<body ng-controller="mainController" layout="column">
+<body ng-controller="mainController" layout="column" ng-cloak>
     <div class="loader">
         <div id="loaderText">
             Loading...
@@ -44,68 +44,81 @@
             <md-button ng-click="controls.download()" class="md-raised md-primary md-hue-2">Download</md-button>
             <label class="md-button md-raised md-warn md-hue-2">
                 <input class="ng-hide" ngf-select ng-model="controls.jsonFile" name="attachement"
-                accept="application/JSON" ngf-change=controls.load($event) type="file" />
+                    accept="application/JSON" ngf-change=controls.load($event) type="file" />
                 Load File
-            </label> 
+            </label>
             <div></div>
         </div>
     </md-toolbar>
-    <md-content pixeling="originalImage" flex layout-padding>
+    <md-content pixeling="originalImage" flex layout-padding >
         <div class="viewer" layout="column" flex>
-            <div class="viewer-header" layout="row"layout-padding="" flex>
-                <div flex="50">
+            <div class="viewer-header" layout="row" layout-padding flex>
+                <div flex="40" layout="column">
                     <md-toolbar class="md-warn">
-                        <div class="md-toolbar-tools"> 
+                        <div class="md-toolbar-tools">
                             <h2 flex md-truncate>Original Image</h2>
                             <label class="md-button md-raised md-warn md-hue-2">
                                 <input class="ng-hide" ngf-select ng-model="picFile" name="attachement"
                                     accept="image/jpeg, image/jpg" type="file" />
                                 Choose File
-                            </label> 
+                            </label>
                             <div></div>
                         </div>
                     </md-toolbar>
-                    <md-slider-container layout-padding>
-                        <span>Pixel size</span>
-                        <md-slider min="2" max="{{controls.maxPixelSize}}" ng-change="controls.onChangePixelSize()" ng-model="controls.pixelSize"></md-slider>
-                        <md-input-container>
-                            <input readonly ng-model="controls.pixelSize" >
-                        </md-input-container>
-                    </md-slider-container>
-                    <!-- <md-input-container>
-                        <label>Pixel size</label>
-                        <input ng-model="controls.pixelSize" ng-change="controls.onChangePixelSize()">
-                    </md-input-container> -->
                 </div>
-                <div flex="50" layout="column" >
+                <div flex="40" layout="column">
                     <md-toolbar class="md-hue-2">
-                        <div class="md-toolbar-tools"> 
+                        <div class="md-toolbar-tools">
                             <h2 flex md-truncate>Original Image</h2>
-                            <md-button ng-click="updatePixels()" class="md-raised md-primary">Update</md-button>
+                            <md-button ng-disabled="!picFile" ng-click="updatePixels()" class="md-raised md-primary">
+                                Update</md-button>
                             <div></div>
                         </div>
-                    </md-toolbar> 
-                    <md-slider-container layout-padding>
-                        <span>Colors</span>
-                        <md-slider min="2" max="16" ng-model="controls.colors"></md-slider>
-                        <md-input-container>
-                            <input readonly type="number" ng-model="controls.colors">
-                        </md-input-container>
-                    </md-slider-container>
+                    </md-toolbar>
+                </div>
+                <div flex="20">
+                    <md-toolbar class="">
+                        <div class="md-toolbar-tools">
+                            <h2 flex md-truncate>Options</h2>
+                        </div>
+                    </md-toolbar>
                 </div>
             </div>
             <div class="viewer-body" layout="row" flex>
-                <div class="original-image panel" flex="50">
+                <div class="original-image panel" flex="40" layout="column" layout-padding>
+                    <md-slider-container>
+                        <span style="white-space: nowrap;" flex="auto">Pixel size</span>
+                        <md-slider min="2" max="{{controls.maxPixelSize}}" ng-change="controls.onChangePixelSize()"
+                            ng-model="controls.pixelSize"></md-slider>
+                        <md-input-container>
+                            <input readonly ng-model="controls.pixelSize">
+                        </md-input-container>
+                    </md-slider-container>
                     <div class="panel-body">
                         <img ngf-src="picFile" id="originalImage" style="display: none">
                         <canvas width="300" height="300" ng-style="originalStyle" id="originalImageCanvas"></canvas>
 
                     </div>
                 </div>
-                <div class="pixel-image panel" flex="50">
+                <div class="pixel-image panel" flex="40" layout="column" layout-padding>
+                    <md-slider-container>
+                        <span>Colors</span>
+                        <md-slider min="2" max="15" ng-model="controls.colors"></md-slider>
+                        <md-input-container>
+                            <input readonly type="number" ng-model="controls.colors">
+                        </md-input-container>
+                    </md-slider-container>
                     <div>
                         <canvas width="300" height="300" id="pixelArt"></canvas>
                     </div>
+                </div>
+                <div flex="20" layout="column" layout-padding class="options">
+                    <p> Color selecion by :</p>
+                    <md-radio-group ng-model="controls.colorSelection">
+                        <md-radio-button value="1">Average</md-radio-button>
+                        <md-radio-button value="2">Median</md-radio-button>
+                        <md-radio-button value="3">Mode</md-radio-button>
+                    </md-radio-group>
                 </div>
             </div>
         </div>
@@ -114,10 +127,9 @@
             <md-progress-linear md-mode="determinate" value="{{pixelData.process}}"></md-progress-linear>
         </div>
 
-
         <div class="color-panel" layout="column" flex>
             <div class="palette">
-                <div ng-repeat="itemP in palette">
+                <div ng-repeat="itemP in palette" ng-hide="itemP.used == 0">
                     <span>
                         {{$index+1}}
                     </span>
@@ -140,45 +152,44 @@
                         </div>
                     </div>
                     <div>
-                        Used {{colorCounter[itemP.key]}} times
+                        Used {{itemP.used}} times
                     </div>
 
                 </div>
             </div>
         </div>
 
-         <!-- <div id="kmeans-plot"   flex style="height: 600px;"></div> -->
+        <!-- <div id="kmeans-plot"   flex style="height: 600px;"></div> -->
 
-        
 
         <div ng-if="palette" class="color-map" ng-class="{'no-colors':!controls.showColors}" flex>
 
-            <div class="controls" layout="row" flex>
+            <div class="controls" layout="row" flex layout-padding >
                 <md-switch ng-model="controls.showColors" flex="20">
-                    <span>Show Colos</span>
+                    <span>Show colors</span>
                 </md-switch>
-                <br>
+                <md-switch ng-model="controls.showGuides" flex="20">
+                    <span>Show guides</span>
+                </md-switch>
                 <div layout flex>
+                    
                     <div flex="10" layout layout-align="center center">
                         <span class="md-body-1">Guides each</span>
                     </div>
-                    <md-slider flex md-discrete ng-model="controls.guide" step="2" min="2" max="16"></md-slider>
+                    <md-slider ng-disabled="!controls.showGuides"  flex md-discrete ng-model="controls.guide" step="2" min="4" max="16"></md-slider>
                 </div>
             </div>
             <div flex class="map-result">
                 <div ng-repeat="row in bitMap track by $index" class="color-row"
                     ng-class="{'guide-top': controls.isGuide($index)}">
                     <div ng-repeat="color in row track by $index" class="color-cell"
-                        ng-class="{'guide-left': controls.isGuide($index)}"
-                        style="background: rgb({{palette[color].rgb[0]}}, {{palette[color].rgb[1]}}, {{palette[color].rgb[2]}})">
-                        <!-- {{color+1}} -->
+                        ng-class="{'guide-left': controls.isGuide($index)}" style="background: {{palette[color].key}}">
+                        {{color+1}}
                     </div>
                 </div>
             </div>
 
         </div>
-
-
 
     </md-content>
 

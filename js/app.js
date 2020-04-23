@@ -6,7 +6,11 @@ var app = angular.module("PixArtApp", [
 app.config(function ($mdThemingProvider) {
     $mdThemingProvider.theme('default')
         .primaryPalette('pink')
-        .accentPalette('orange');
+        .accentPalette('orange')
+        // .primaryPalette('blue')
+        // .accentPalette('teal')
+        .warnPalette('green')
+        .backgroundPalette('grey');
 });
 
 app.controller("mainController", function IndexController($scope) {
@@ -21,10 +25,11 @@ app.controller("mainController", function IndexController($scope) {
 })
 
 
-app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interval) {
+app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialog) {
     return {
         link: function (scope, element, attributes, ctrls) {
             'use strict';
+
             var canvas = element.find("#pixelArt")[0];
             var canvasImg = element.find("#originalImageCanvas")[0];
             var idImage = attributes.pixeling;
@@ -35,38 +40,50 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
             var domImage = imageElement[0];
 
-            scope.controls={
-                showColors: true,
-                guide: 16,
-                isGuide : function(index){
-                    return ((index +1) % scope.controls.guide) === 0;
+            function onChangePixelSize() {
+
+                if (imageData.pixelSize != scope.controls.pixelSize) {
+                    imageData.windowSize = scope.controls.pixelSize * imageData.resultSize;
+                    drawOriginal();
                 }
             }
+
+            scope.controls = {
+                showColors: true,
+                guide: 16,
+                colors: 15,
+                isGuide: function (index) {
+                    return ((index + 1) % scope.controls.guide) === 0;
+                },
+                onChangePixelSize: onChangePixelSize,
+                pixelSize: "",
+                maxPixelSize: 10
+            }
+
 
             var imageData = {
                 w: 0,
                 h: 0,
-                result: {
-                    w: 32,
-                    h: 32
-                },
-                gridSize: 10
+                canvasResultSize: 0,
+                resultSize: 32,
+                gridSize: 10,
+                pixelSize: 1
             }
 
-            var pixelImage = [];
+            // var pixelImage = [];
 
-            function initPixelImage() {
-                var x, y;
-                for (x = 0; x < imageData.result.w; x++) {
-                    var row = []
-                    for (y = 0; y < imageData.result.h; y++) {
-                        row.push("#FFFFFF")
-                    }
-                    pixelImage.push(row);
-                }
-            }
+            // function initPixelImage() {
+            //     var x, y;
+            //     for (x = 0; x < imageData.resultSize; x++) {
+            //         var row = []
+            //         for (y = 0; y < imageData.resultSize; y++) {
+            //             row.push("#FFFFFF")
+            //         }
+            //         pixelImage.push(row);
+            //     }
+            // }
 
-            initPixelImage()
+            // initPixelImage()
 
 
             scope.pixelData = imageData;
@@ -77,6 +94,10 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
             function drawGridInner() {
 
+
+                canvas.width = imageData.canvasResultSize;
+                canvas.height = imageData.canvasResultSize;
+
                 // var processing = $interval(function () {
                 //     console.log(imageData.process)
                 //     scope.loadingProcess = imageData.process;
@@ -86,13 +107,14 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
 
                 var x, y;
-                var step = imageData.gridSize;
-                var hg = imageData.result.h * imageData.gridSize;
-                var wg = imageData.result.w * imageData.gridSize;
-                var max = imageData.result.h * imageData.result.w;
+                // var step = imageData.gridSize;
+                // var hg = imageData.resultSize * imageData.gridSize;
+                // var wg = imageData.resultSize * imageData.gridSize;
+                var max = imageData.resultSize * imageData.resultSize;
 
-                var pixelSize = imageData.pixelSize; //Math.floor(imageData.maxSize / imageData.result.w);
-                // imageData.pixelSize = pixelSize;
+                var pixelSize = imageData.pixelSize;
+                scope.controls.pixelSize = pixelSize
+                // imageData.pixelSize = pixelSize; 
 
 
                 var current = 0
@@ -103,15 +125,23 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
                 var xPadding = imageData.clip.x1 + 1;
                 var yPadding = imageData.clip.y1 + 1;
 
-                for (x = 0; x < imageData.result.w; x++) {
-                    var xg = x * imageData.gridSize;
-                    var xp = (x * pixelSize) + xPadding;
-                    for (y = 0; y < imageData.result.h; y++) {
+                imageData.pixels = []
 
-                        var yg = y * imageData.gridSize;
-                        var yp = (y * pixelSize) + yPadding;
+                for (y = 0; y < imageData.resultSize; y++) {
+                    var yg = y * imageData.gridSize;
+                    var yp = (y * pixelSize) + yPadding;
+                    for (x = 0; x < imageData.resultSize; x++) {
 
-                        getPixelColor(xp, yp, pixelSize)
+                        var xg = x * imageData.gridSize;
+                        var xp = (x * pixelSize) + xPadding;
+
+                        var pixel = getPixelColor(xp, yp, pixelSize);
+
+                        imageData.pixels.push({
+                            red: pixel[0],
+                            green: pixel[1],
+                            blue: pixel[2]
+                        })
 
                         ctx.fillRect(xg, yg, imageData.gridSize, imageData.gridSize);
                         // ctx.rect(xg, yg, imageData.gridSize, imageData.gridSize);
@@ -136,8 +166,8 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
                 $timeout(rgbQuant, 10)
                 // console.log(imageData)
-                // canvas.width = imageData.gridSize * imageData.result.w;
-                // canvas.height = imageData.gridSize * imageData.result.h;
+                // canvas.width = imageData.gridSize * imageData.resultSize;
+                // canvas.height = imageData.gridSize * imageData.resultSize;
             }
 
             function getModa(values) {
@@ -157,7 +187,7 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
                         keyMax = key;
                     }
                 }
-                console.log(sum)
+                // console.log(sum)
                 return keyMax;
             }
 
@@ -244,6 +274,11 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
 
             function drawOriginal() {
+
+                console.log("drawOriginal")
+                if (!imageData.loaded) {
+                    return
+                }
                 imageData.h = img.height;
                 imageData.w = img.width;
 
@@ -253,25 +288,33 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
                 canvasImg.width = imageData.w;
                 canvasImg.height = imageData.h;
 
-                canvas.width = imageData.gridSize * imageData.result.w;
-                canvas.height = imageData.gridSize * imageData.result.h;
+                imageData.canvasResultSize = imageData.gridSize * imageData.resultSize;
+                // canvas.height = imageData.gridSize * imageData.resultSize;
 
                 var max = imageData.w > imageData.h ? imageData.h : imageData.w;
-                imageData.maxSize = max;
+                // imageData.maxSize = max;
 
-                var pixelSize = Math.floor(imageData.maxSize / imageData.result.w);
+                var maxSize = imageData.w < imageData.h ? imageData.h : imageData.w;
+
+                var windowSize = imageData.windowSize || max;
+
+                var pixelSize = Math.floor(windowSize / imageData.resultSize);
                 imageData.pixelSize = pixelSize;
 
-                var cipMax = (pixelSize * imageData.result.w);
+                // var pixelSize = 
+                scope.controls.maxPixelSize = Math.round(maxSize / imageData.resultSize);
+
+
+                var cipMax = (pixelSize * imageData.resultSize);
 
                 if (max == imageData.w) {
-                    canvasImg.style.width = canvas.width < imageData.w ? canvas.width : imageData.w;
+                    canvasImg.style.width = imageData.canvasResultSize < imageData.w ? imageData.canvasResultSize : imageData.w;
                 } else {
                     canvasImg.style.width = "";
                 }
 
                 if (max == imageData.h) {
-                    canvasImg.style.height = canvas.width < imageData.h ? canvas.height : imageData.h;
+                    canvasImg.style.height = imageData.canvasResultSize < imageData.h ? imageData.canvasResultSize : imageData.h;
                 } else {
                     canvasImg.style.height = "";
                 }
@@ -341,7 +384,7 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
                 })
             })
 
-            scope.newPixels = function () {
+            scope.updatePixels = function () {
                 $timeout(drawGrid)
             }
 
@@ -357,12 +400,15 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
             img.onload = function () {
 
+                imageData.loaded = false;
+
                 lock();
 
                 setTimeout(function () {
-                    drawOriginal();
-                    // $timeout(drawOriginal, 5);
-                    $timeout(drawGrid, 10);
+                    imageData.loaded = true;
+                    // drawOriginal();
+                    $timeout(drawOriginal, 5);
+                    $timeout(drawGrid, 15);
                 }, 0);
                 // img.style.display = 'none';
 
@@ -380,29 +426,200 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
                 $("body").removeClass("loading");
             }
 
+            function runKMeans() {
+
+                // var pixels = [];
+                // for (var x = 0; x < canvas.width; x++) {
+                //     for (var y = 0; y < canvas.height; y++) {
+                //         var pixel = canvas.getContext('2d').getImageData(x, y, 1, 1).data;
+                //         pixels.push({
+                //             red: pixel[0],
+                //             green: pixel[1],
+                //             blue: pixel[2]
+                //         });
+                //     }
+                // }
+                var kMeansInputValue = parseInt(scope.controls.colors);
+
+                var copy = _.map(imageData.pixels, _.clone);
+
+                let kmeansRunner = new KMeansRunner();
+                let result = kmeansRunner.run(kMeansInputValue, copy);
+
+                // let kmeansPlotter = new KMeansPlotter(); 
+                // kmeansPlotter.plot("kmeans-plot", result.clusters);
+                // console.log(result)
+                // PaletteTableWriter.drawPaletteTable("#kmeans-palette", result.clusters);
+
+                // $("#kmeans-output").show();
+
+                return result;
+            }
+
+            function getColorCorrection(color){
+                // return ImageUtil.computeAverageColor(color)
+                // return getMedian(color)
+                return getMedian2(color)
+            }
+
+            function paletteTable(pixelGroups) {
+                var paletteTableString = "";
+
+
+                var totalPixels = _.chain(pixelGroups)
+                    .map(function (b) { return b.length; })
+                    .sum()
+                    .value();
+
+                pixelGroups = _.sortBy(pixelGroups, function (pg) { 
+                    var correctColor = getColorCorrection(pg);
+                    var hsl = ImageUtil.rgbToHsl(correctColor.red, correctColor.green, correctColor.blue);
+                    return hsl[0];
+                }).reverse();
+
+                var palette = [];
+
+                _.each(pixelGroups, function (group) {
+
+                    var correctColor = getColorCorrection(group);
+                    var colorData = {
+                        used: group.length,
+                        rgb: [parseInt(correctColor.red), parseInt(correctColor.green), parseInt(correctColor.blue)],
+                        hex: ImageUtil.pixelToHexString(correctColor),
+                        group: group
+                    }
+                    palette.push(colorData)
+                    // var percent = group.length / totalPixels;
+                    // paletteTableString += "<tr>";
+                    // paletteTableString += "<td>";
+                    // paletteTableString += ImageUtil.pixelToHexString(averageColor);
+                    // paletteTableString += "</td>";
+                    // paletteTableString += "<td>";
+                    // paletteTableString += ImageUtil.getColorPreviewHtmlString(averageColor);
+                    // paletteTableString += "</td>";
+                    // paletteTableString += "<td>";
+                    // paletteTableString += (percent * 100).toFixed(2);
+                    // paletteTableString += "</td>";
+                    // paletteTableString += "</tr>";
+                });
+                debugger
+                //     $(containerId).append("<table class=\"table\">" + paletteTableString + "</table");
+                //     $(containerId).show();
+                return palette;
+            }
+
+
+            function HEX2RGB(hex) {
+                if (hex.charAt(0) === '#') {
+                    hex = hex.substr(1);
+                }
+                if ((hex.length < 2) || (hex.length > 6)) {
+                    return false;
+                }
+                var values = hex.split(''),
+                    r,
+                    g,
+                    b;
+
+                if (hex.length === 2) {
+                    r = parseInt(values[0].toString() + values[1].toString(), 16);
+                    g = r;
+                    b = r;
+                } else if (hex.length === 3) {
+                    r = parseInt(values[0].toString() + values[0].toString(), 16);
+                    g = parseInt(values[1].toString() + values[1].toString(), 16);
+                    b = parseInt(values[2].toString() + values[2].toString(), 16);
+                } else if (hex.length === 6) {
+                    r = parseInt(values[0].toString() + values[1].toString(), 16);
+                    g = parseInt(values[2].toString() + values[3].toString(), 16);
+                    b = parseInt(values[4].toString() + values[5].toString(), 16);
+                } else {
+                    return false;
+                }
+                return [r, g, b];
+            }
+
+
+            function getMedian2(values){
+                var ordered = _.sortBy(values, function (val) {  
+                    var hsl = ImageUtil.rgbToHsl(val.red, val.green, val.blue);
+                    return hsl[0];
+                }).reverse();
+
+                var half = Math.floor(ordered.length / 2)
+
+                var median = ordered[half] || {red:NaN,green:NaN,blue:NaN}; 
+                return median;
+            }
+
+
+            function getMedian(values) {
+                var count = {}
+                for (var i = 0; i < values.length; i++) {
+                    var stringVal = ImageUtil.pixelToHexString(values[i]);
+                    if (!count[stringVal]) {
+                        count[stringVal] = 0;
+                    }
+                    count[stringVal]++;
+                }
+
+
+                var arrayOrdered = []
+                for (var key in count) {
+                    arrayOrdered.push({
+                        color: key,
+                        num: count[key]
+                    })
+                }
+
+                arrayOrdered = _.orderBy(arrayOrdered, ['num'], ['asc']);
+
+                // console.log(arrayOrdered)
+                var half = Math.floor(arrayOrdered.length / 2)
+
+                var median = arrayOrdered[half];
+                if(median){
+                    median = HEX2RGB(median.color);
+                }else{
+                    median = [NaN,NaN,NaN]
+                }
+                
+
+                // console.log(median)
+                return {
+                    red: median[0],
+                    green: median[1],
+                    blue: median[2]
+                }
+            }
+
             function rgbQuant() {
 
-                var opts = {
-                    colors: 16,             // desired palette size
-                    method: 2,               // histogram method, 2: min-population threshold within subregions; 1: global top-population
-                    boxSize: [64, 64],        // subregion dims (if method = 2)
-                    boxPxls: 2,              // min-population threshold (if method = 2)
-                    initColors: 4096,        // # of top-occurring colors  to start with (if method = 1)
-                    minHueCols: 0,           // # of colors per hue group to evaluate regardless of counts, to retain low-count hues
-                    dithKern: null,          // dithering kernel name, see available kernels in docs below
-                    dithDelta: 0,            // dithering threshhold (0-1) e.g: 0.05 will not dither colors with <= 5% difference
-                    dithSerp: false,         // enable serpentine pattern dithering
-                    palette: [],             // a predefined palette to start with in r,g,b tuple format: [[r,g,b],[r,g,b]...]
-                    reIndex: false,          // affects predefined palettes only. if true, allows compacting of sparsed palette once target palette size is reached. also enables palette sorting.
-                    useCache: true,          // enables caching for perf usually, but can reduce perf in some cases, like pre-def palettes
-                    cacheFreq: 10,           // min color occurance count needed to qualify for caching
-                    colorDist: "euclidean",  // method used to determine color distance, can also be "manhattan"
-                };
+                var clusterData = runKMeans()
 
-                var q = new RgbQuant(opts);
-                q.sample(canvas);
-                var pal = q.palette(true);
-                var out = q.reduce(canvas);
+                // var opts = {
+                //     colors: scope.controls.colors,             // desired palette size
+                //     method: 2,               // histogram method, 2: min-population threshold within subregions; 1: global top-population
+                //     boxSize: [32, 32],        // subregion dims (if method = 2)
+                //     boxPxls: 2,              // min-population threshold (if method = 2)
+                //     initColors: 32 * 32,        // # of top-occurring colors  to start with (if method = 1)
+                //     minHueCols: 12,           // # of colors per hue group to evaluate regardless of counts, to retain low-count hues
+                //     dithKern: null,          // dithering kernel name, see available kernels in docs below
+                //     dithDelta: 0,            // dithering threshhold (0-1) e.g: 0.05 will not dither colors with <= 5% difference
+                //     dithSerp: false,         // enable serpentine pattern dithering
+                //     palette: [],             // a predefined palette to start with in r,g,b tuple format: [[r,g,b],[r,g,b]...]
+                //     reIndex: false,          // affects predefined palettes only. if true, allows compacting of sparsed palette once target palette size is reached. also enables palette sorting.
+                //     useCache: true,          // enables caching for perf usually, but can reduce perf in some cases, like pre-def palettes
+                //     cacheFreq: 10,           // min color occurance count needed to qualify for caching
+                //     colorDist: "manhattan",  // method used to determine color distance, can also be "manhattan"
+                // };
+
+                // var q = new RgbQuant(opts);
+                // q.sample(canvas);
+                // var pal = q.palette(true);
+                // var out = q.reduce(canvas);
+
+                var pal = paletteTable(clusterData.clusters)
 
                 // console.log(out)
                 scope.palette = [];
@@ -411,44 +628,76 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
                 for (var i = 0; i < pal.length; i++) {
 
-                    var np = getAnimalCrColor(pal[i]);
+                    var np = getAnimalCrColor(pal[i].rgb);
+
+                    // var stringColor = pal[i].rgb.join(",");
+                    // paletteMap[stringColor] = i;
+
+                    np.key = pal[i].hex;
+                    pal[i].colorNumber = i;
+                    // paletteMap[np.key] = i;
                     scope.palette.push(np)
-                    paletteMap[pal[i].join(",")] = i;
+
                 }
 
 
-                var DAT = drawPixels(out, canvas.width);
-                // var DAT = new ImageData(out, canvas.width, canvas.height); 
+                // var DAT = drawPixels(out, imageData.canvasResultSize);
+                // // var DAT = new ImageData(out, canvas.width, canvas.height); 
 
-                ctx.putImageData(DAT, 0, 0);
+                // ctx.putImageData(DAT, 0, 0);
 
-                 
-                    findColors(paletteMap);
-                    // console.log(pal)
-                    // console.log(out)
 
-                    unlock();
-              
+                findColors(pal);
+                // console.log(pal)
+                // console.log(out)
+
+                unlock();
+
 
             }
 
 
+
+
             function findColors(paletteMap) {
-                debugger
+
                 var mapImage = [];
-                var step = Math.floor(imageData.gridSize / 2);
-                for (var y = step; y < canvas.height; y += step) {
+                var size = imageData.resultSize;
+                var counter = {};
+
+                console.log(paletteMap)
+
+                for (var y = 0; y < size; y++) {
                     var row = []
-                    for (var x = step; x < canvas.width; x += step) {
-                        var color = pick(x, y, "array", ctx);
-                        var num = paletteMap[color.join(",")];
-                        row.push(num);
+                    for (var x = 0; x < size; x++) {
+                        // var color = pick(x, y, "array", ctx);
+                        var pixelPos = (y * size) + x;
+                        var color = imageData.pixels[pixelPos];
+
+                        // var stringColor = ImageUtil.pixelToHexString(color),
+                        var colorGroup;
+
+                        for (var p = 0; p < paletteMap.length; p++) {
+                            var indexColor = _.findIndex(paletteMap[p].group, color);
+                            if (indexColor !== -1) {
+                                colorGroup = paletteMap[p];
+                                break
+                            }
+                        }
+
+                        // var num = paletteMap[stringColor];
+                        // if (!counter[stringColor]) {
+                        //     counter[stringColor] = 0;
+                        // }
+                        // counter[stringColor]++;
+                        row.push(colorGroup.colorNumber);
                     }
                     mapImage.push(row)
                 }
                 scope.bitMap = mapImage;
+                scope.colorCounter = counter;
 
-                console.log(mapImage)
+                // console.log(mapImage)
             }
 
 
@@ -570,7 +819,7 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
 
 
 
-            console.log(imageElement)
+            // console.log(imageElement)
             var onNewImage = function (newValue) {
                 img.src = newValue;
 
@@ -579,6 +828,57 @@ app.directive("pixeling", ["$timeout", "$interval", function ($timeout, $interva
             var handlerWatch = scope.$watch(function () {
                 return imageElement.attr('src');
             }, onNewImage);
+
+            scope.controls.download = function (ev) {
+                if (!scope.picFile) {
+                    $mdDialog.show(
+                        $mdDialog.alert()
+                            // .parent(angular.element(document.querySelector('#popupContainer')))
+                            .clickOutsideToClose(true)
+                            .title('Missing image data :(')
+                            // .textContent('Missing image data.')
+                            .ok('ok')
+                            .targetEvent(ev)
+                    );
+
+                }
+                var contentData = {};
+                contentData.palette = scope.palette;
+                contentData.bitMap = scope.bitMap;
+                contentData.colorCounter = scope.colorCounter;
+                var content = JSON.stringify(contentData);
+                // any kind of extension (.txt,.cpp,.cs,.bat)
+
+                var filename = scope.picFile.name + ".json";
+
+                var blob = new Blob([content], {
+                    type: "text/plain;charset=utf-8"
+                });
+
+                saveAs(blob, filename);
+            }
+
+            scope.controls.load = function () {
+                var reader = new FileReader();
+                reader.onload = onReaderLoad;
+                reader.readAsText(scope.controls.jsonFile);
+            }
+
+
+            function onReaderLoad(event) {
+                console.log(event.target.result);
+                var obj = JSON.parse(event.target.result);
+                $timeout(function () {
+
+                    scope.palette = obj.palette;
+                    scope.bitMap = obj.bitMap;
+                    scope.colorCounter = obj.colorCounter;
+
+                })
+            }
+
+
+
 
         }
     }

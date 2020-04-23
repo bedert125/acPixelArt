@@ -1,7 +1,7 @@
 html,
 html * {
-    box-sizing: border-box;
-    margin: 0;
+    // box-sizing: border-box;
+    // margin: 0;
     // font-family: Roboto,Helvetica Neue,sans-serif;
     font-size: 14px;
 }
@@ -141,8 +141,10 @@ body.loading {
 }
 
 .color-map {
+    text-align: center;
     .color-row {
         white-space: nowrap;
+        // display: inline-block;
     }
 
     .color-cell {
@@ -154,13 +156,20 @@ body.loading {
     }
 
     .guide-left{
-        border-right: 2px solid red;
+        border-right: 10px solid rgba(255, 0, 0, 0.473);
     }
     .guide-top .color-cell{
-        border-bottom: 2px solid red;
+        border-bottom: 10px solid rgba(255, 0, 0, 0.473);
     }
     &.no-colors .color-cell{
         background: white !important;
         outline: none !important;
     }
+}
+
+
+.colorPreview {
+    border: 1px solid lightgray;
+    width: 100px;
+    height: 30px;
 }

@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.9/angular-material.min.css">
 
 
+    
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular-animate.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular-aria.min.js"></script>
@@ -21,10 +22,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.2/lodash.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
+    <!-- <script src="http://netbeast.github.io/colorsys/browser.js"></script>
+     -->
+     <script src="js/plugins/colorconverter.js"></script>
+
 
     <script src="js/plugins/ng-file-upload-all.min.js"></script>
     <script src="js/plugins/FileSaver.min.js"></script>
     <script src="js/plugins/k-means-bundle.js"></script>
+
     <!-- <script src="js/plugins/palettemaker/image-util.js"></script>
     <script src="js/plugins/palettemaker/kmeans-plotter.js"></script>
     <script src="js/plugins/palettemaker/kmeans-runner.js"></script>
@@ -41,16 +47,16 @@
     <md-toolbar>
         <div class="md-toolbar-tools">
             <h2 class="md-flex" flex>Animal Crossing Pixel Art</h2>
-            <md-button ng-click="controls.download()" class="md-raised md-primary md-hue-2">Download</md-button>
+            <md-button ng-click="download()" class="md-raised md-primary md-hue-2">Download</md-button>
             <label class="md-button md-raised md-warn md-hue-2">
                 <input class="ng-hide" ngf-select ng-model="controls.jsonFile" name="attachement"
-                    accept="application/JSON" ngf-change=controls.load($event) type="file" />
+                    accept="application/JSON" ngf-change=load($event) type="file" />
                 Load File
             </label>
             <div></div>
         </div>
     </md-toolbar>
-    <md-content pixeling="originalImage" flex layout-padding >
+    <md-content pixeling="originalImage" flex layout-padding>
         <div class="viewer" layout="column" flex>
             <div class="viewer-header" layout="row" layout-padding flex>
                 <div flex="40" layout="column">
@@ -113,12 +119,20 @@
                     </div>
                 </div>
                 <div flex="20" layout="column" layout-padding class="options">
-                    <p> Color selecion by :</p>
+                    <h2 class="md-toolbar-tools">Color selecion by:</h2>
                     <md-radio-group ng-model="controls.colorSelection">
-                        <md-radio-button value="1">Average</md-radio-button>
-                        <md-radio-button value="2">Median</md-radio-button>
-                        <md-radio-button value="3">Mode</md-radio-button>
+                        <md-radio-button value="0">Histogram</md-radio-button>
+                        <md-subheader class="md-no-sticky">Clostering</md-subheader>
+                        <md-radio-button value="1">Average color</md-radio-button>
+                        <md-radio-button value="2">Median color</md-radio-button>
+                        <md-radio-button value="3">Mode color</md-radio-button>
                     </md-radio-group>
+                    <md-divider></md-divider>
+                    <h2 class="md-toolbar-tools">Background</h2>
+                    <md-input-container>
+                        <label>#RGB color</label>
+                        <input ng-model="controls.background" ng-change="controls.onChangeBgColor()">
+                      </md-input-container>
                 </div>
             </div>
         </div>
@@ -151,9 +165,9 @@
                             <span> {{itemP.position[2]+1}}</span>
                         </div>
                     </div>
-                    <div>
+                    <!-- <div>
                         Used {{itemP.used}} times
-                    </div>
+                    </div> -->
 
                 </div>
             </div>
@@ -164,7 +178,7 @@
 
         <div ng-if="palette" class="color-map" ng-class="{'no-colors':!controls.showColors}" flex>
 
-            <div class="controls" layout="row" flex layout-padding >
+            <div class="controls" layout="row" flex layout-padding>
                 <md-switch ng-model="controls.showColors" flex="20">
                     <span>Show colors</span>
                 </md-switch>
@@ -172,18 +186,19 @@
                     <span>Show guides</span>
                 </md-switch>
                 <div layout flex>
-                    
+
                     <div flex="10" layout layout-align="center center">
                         <span class="md-body-1">Guides each</span>
                     </div>
-                    <md-slider ng-disabled="!controls.showGuides"  flex md-discrete ng-model="controls.guide" step="2" min="4" max="16"></md-slider>
+                    <md-slider ng-disabled="!controls.showGuides" flex md-discrete ng-model="controls.guide" step="2"
+                        min="4" max="16"></md-slider>
                 </div>
             </div>
             <div flex class="map-result">
                 <div ng-repeat="row in bitMap track by $index" class="color-row"
                     ng-class="{'guide-top': controls.isGuide($index)}">
                     <div ng-repeat="color in row track by $index" class="color-cell"
-                        ng-class="{'guide-left': controls.isGuide($index)}" style="background: {{palette[color].key}}">
+                        ng-class="{'guide-left': controls.isGuide($index)}" style="background: {{palette[color].hex}}">
                         {{color+1}}
                     </div>
                 </div>

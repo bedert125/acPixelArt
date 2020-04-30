@@ -537,6 +537,7 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                 }).reverse();
 
                 var palette = [];
+                var map = {};
 
                 _.each(pixelGroups, function (group) {
 
@@ -635,60 +636,20 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
             }
 
 
-            // function getMedian(values) {
-            //     var count = {}
-            //     for (var i = 0; i < values.length; i++) {
-            //         var stringVal = ImageUtil.pixelToHexString(values[i]);
-            //         if (!count[stringVal]) {
-            //             count[stringVal] = 0;
-            //         }
-            //         count[stringVal]++;
-            //     }
-
-
-            //     var arrayOrdered = []
-            //     for (var key in count) {
-            //         arrayOrdered.push({
-            //             color: key,
-            //             num: count[key]
-            //         })
-            //     }
-
-            //     arrayOrdered = _.orderBy(arrayOrdered, ['num'], ['asc']);
-
-            //     // console.log(arrayOrdered)
-            //     var half = Math.floor(arrayOrdered.length / 2)
-
-            //     var median = arrayOrdered[half];
-            //     if(median){
-            //         median = HEX2RGB(median.color);
-            //     }else{
-            //         median = [NaN,NaN,NaN]
-            //     }
-
-
-            //     // console.log(median)
-            //     return {
-            //         red: median[0],
-            //         green: median[1],
-            //         blue: median[2]
-            //     }
-            // }
-
             function rgbQuant() {
                 var opts = {
                     colors: scope.controls.colors,             // desired palette size
-                    method: 2,               // histogram method, 2: min-population threshold within subregions; 1: global top-population
-                    boxSize: [80, 80],        // subregion dims (if method = 2)
-                    boxPxls: 10,              // min-population threshold (if method = 2)
+                    method: 1,               // histogram method, 2: min-population threshold within subregions; 1: global top-population
+                    boxSize: [320, 320],        // subregion dims (if method = 2)
+                    boxPxls: 80,              // min-population threshold (if method = 2)
                     initColors: 32 * 32,        // # of top-occurring colors  to start with (if method = 1)
-                    minHueCols: 15,           // # of colors per hue group to evaluate regardless of counts, to retain low-count hues
+                    minHueCols: 0,           // # of colors per hue group to evaluate regardless of counts, to retain low-count hues
                     dithKern: null,          // dithering kernel name, see available kernels in docs below
-                    dithDelta: 0.05,            // dithering threshhold (0-1) e.g: 0.05 will not dither colors with <= 5% difference
+                    dithDelta: 0,            // dithering threshhold (0-1) e.g: 0.05 will not dither colors with <= 5% difference
                     dithSerp: false,         // enable serpentine pattern dithering
                     palette: [],             // a predefined palette to start with in r,g,b tuple format: [[r,g,b],[r,g,b]...]
                     reIndex: false,          // affects predefined palettes only. if true, allows compacting of sparsed palette once target palette size is reached. also enables palette sorting.
-                    useCache: true,          // enables caching for perf usually, but can reduce perf in some cases, like pre-def palettes
+                    useCache: false,          // enables caching for perf usually, but can reduce perf in some cases, like pre-def palettes
                     cacheFreq: 10,           // min color occurance count needed to qualify for caching
                     colorDist: "manhattan",  // method used to determine color distance, can also be "manhattan"
                 };
@@ -747,6 +708,7 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                 var clusterData = runKMeans()
                 var pal = paletteTable(clusterData.clusters)
 
+                var map = {};
                 for (var i = 0; i < pal.length; i++) {
 
                     var np = getAnimalCrColor(pal[i].rgb);
@@ -759,6 +721,18 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                         green: np.rgb[1],
                         blue: np.rgb[2],
                     });
+
+                    if(map[stringColor]!= undefined){
+                        console.log("duplicated", stringColor,map[stringColor], i)
+                        var duplicated =map[stringColor];
+                        pal[duplicated].group = _.concat(pal[duplicated].group, pal[i].group);
+                        pal[i].group =[];   
+                        pal[i].colorNumber = duplicated; 
+                        np.used = 0;
+                        // join groups;
+                         
+                    }
+                    map[stringColor] = i;
                     
                     np.hex = stringColor;
 
@@ -818,7 +792,7 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
 
                 var mapImage = [];
                 var size = imageData.resultSize;
-                var counter = {};
+                var map = {};
 
 
                 for (var y = 0; y < size; y++) {
@@ -837,12 +811,13 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                         for (var p = 0; p < paletteMap.length; p++) {
                             var indexColor = _.findIndex(paletteMap[p].group, color);
                             if (indexColor !== -1) {
-                                colorGroup = paletteMap[p];
+                                colorGroup = paletteMap[p]; 
                                 break
                             }
                         }
+                         var colornumber = colorGroup.colorNumber
 
-                        ctx.fillStyle = colorGroup.hex;
+                        ctx.fillStyle = scope.palette[colornumber].hex;
 
                         ctx.fillRect(xg, yg, imageData.gridSize, imageData.gridSize);
                         // var num = paletteMap[stringColor];
@@ -850,7 +825,7 @@ app.directive("pixeling", ["$timeout", "$mdDialog", function ($timeout, $mdDialo
                         //     counter[stringColor] = 0;
                         // }
                         // counter[stringColor]++;
-                        row.push(colorGroup.colorNumber);
+                        row.push(colornumber);
                     }
                     mapImage.push(row)
                 }

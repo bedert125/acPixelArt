@@ -84,6 +84,8 @@ function rgbToHsv(r, g, b){
 
   var d = max - min;
   s = max == 0 ? 0 : d / max;
+  var s2 = 1-(min/max)
+  console.log(s, s2)
 
   if(max == min){
       h = 0; // achromatic

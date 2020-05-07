@@ -25,11 +25,14 @@
     <!-- <script src="http://netbeast.github.io/colorsys/browser.js"></script>
      -->
      <script src="js/plugins/colorconverter.js"></script>
+    <script src="js/plugins/mediancut.js"></script>
 
 
     <script src="js/plugins/ng-file-upload-all.min.js"></script>
     <script src="js/plugins/FileSaver.min.js"></script>
     <script src="js/plugins/k-means-bundle.js"></script>
+
+
 
     <!-- <script src="js/plugins/palettemaker/image-util.js"></script>
     <script src="js/plugins/palettemaker/kmeans-plotter.js"></script>
@@ -122,6 +125,7 @@
                     <h2 class="md-toolbar-tools">Color selecion by:</h2>
                     <md-radio-group ng-model="controls.colorSelection">
                         <md-radio-button value="0">Histogram</md-radio-button>
+                        <md-radio-button value="4">Median cut</md-radio-button>
                         <md-subheader class="md-no-sticky">Clostering</md-subheader>
                         <md-radio-button value="1">Average color</md-radio-button>
                         <md-radio-button value="2">Median color</md-radio-button>
@@ -208,7 +212,14 @@
 
     </md-content>
 
+
     <script src="js/app.js"></script>
+    <script src="js/services/medianCutService.js"></script>
+    <script src="js/services/histogramQService.js"></script>
+    <script src="js/services/kMeansService.js"></script>
+
+    <script src="js/services/utilsService.js"></script>
+
 </body>
 
 </html>

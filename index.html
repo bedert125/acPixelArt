@@ -147,7 +147,7 @@
 
         <div class="color-panel" layout="column" flex>
             <div class="palette">
-                <div ng-repeat="itemP in palette" ng-hide="itemP.used == 0">
+                <div ng-repeat="itemP in palette" >
                     <span>
                         {{$index+1}}
                     </span>
@@ -155,7 +155,7 @@
                     <div class="color-bar"
                         style="background: rgb({{itemP.rgb[0]}}, {{itemP.rgb[1]}}, {{itemP.rgb[2]}})">
                     </div>
-                    <div class="color-position">
+                    <div class="color-position" ng-hide="itemP.used == 0">
                         <div>
                             <span>A</span>
                             <span> {{itemP.position[0]+1}}</span>
@@ -168,6 +168,9 @@
                             <span>C</span>
                             <span> {{itemP.position[2]+1}}</span>
                         </div>
+                    </div>
+                    <div ng-show="itemP.used == 0" class="empty-color">
+
                     </div>
                     <!-- <div>
                         Used {{itemP.used}} times

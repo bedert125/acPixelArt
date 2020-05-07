@@ -176,7 +176,7 @@ angular.module("PixArtApp").factory("kMeans", ["utils",
 
         function getColorCorrection(color, type) {
             var option = parseInt(type)
-            console.log("----- color correction", type)
+            // console.log("----- color correction", type)
             switch (option) {
                 default:
                 case 1:

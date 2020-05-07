@@ -19,32 +19,31 @@ angular.module("PixArtApp").factory("medianCut", ["utils",
         function runner(img, n, imageData) {
 
 
-            var pal = getColors(img, n)
+            var boxes = getColors(img, n)
 
 
             var map = {};
             var palette = []
-            for (var i = 0; i < pal.length; i++) {
+            for (var i = 0; i < boxes.length; i++) {
 
-                var color = utils.getAnimalCrColor(pal[i].rgb);
+                var color = utils.getAnimalCrColor(boxes[i].rgb);
                 // np.key = pal[i].hex;
                 // np.used = pal[i].used;
-                pal[i].colorNumber = i;
-                color.colorNumber = i;
-
+               var colorNumber = i;
                 var stringColor = color.hex;
 
                 if (map[stringColor] != undefined) {
                     console.log("duplicated", stringColor, map[stringColor], i)
-                    var duplicated = map[stringColor];
-                    // pal[duplicated].group = _.concat(pal[duplicated].group, pal[i].group);
-                    // pal[i].group = [];
-                    // pal[i].colorNumber = duplicated;
+                    var duplicated = map[stringColor]; 
+                    colorNumber = duplicated;
                     color.used = 0;
                     // join groups;
 
                 }
-                map[stringColor] = i;
+
+                boxes[i].colorNumber = colorNumber;
+                color.colorNumber = colorNumber;
+                map[stringColor] = colorNumber;
 
                 // np.hex = stringColor;
 
@@ -56,14 +55,14 @@ angular.module("PixArtApp").factory("medianCut", ["utils",
             console.log(map)
             console.log(palette)
 
-            var result = findColors(map, palette, pal, imageData);
+            var result = findColors(palette, boxes, imageData);
             result.palette = palette;
 
             return result;
         }
 
 
-        function findColors(paletteMap, palette, boxes, imageData) {
+        function findColors(palette, boxes, imageData) {
 
             // var mapImage = [];
             // var size = imageData.resultSize;

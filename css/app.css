@@ -95,7 +95,7 @@ body.loading .loader > div {
   content: "\274c";
   /* use the hex value here... */
   font-size: 40px;
-  color: #FFF;
+  color: #fff;
   line-height: 48px;
   text-align: center;
 }

@@ -1,11 +1,6 @@
-html,
-html * {
-    // box-sizing: border-box;
-    // margin: 0;
-    // font-family: Roboto,Helvetica Neue,sans-serif;
-    // font-size: 14px;
-}
-
+// html,
+// html * { 
+// }
 
 .loader {
     display: none;
@@ -25,7 +20,7 @@ body.loading {
         background-color: rgba(236, 236, 236, 0.4);
         z-index: 10;
 
-        >div {
+        > div {
             position: absolute;
             left: 50%;
             top: 50%;
@@ -37,7 +32,6 @@ body.loading {
 }
 
 .viewer {
-
     // display: table;
     width: 100%;
     // table-layout: table-fixed;
@@ -45,12 +39,12 @@ body.loading {
     margin: 0 auto;
     padding: 10px;
 
-    >div {
+    > div {
         // display: table-row;
         // width: 50%;
         // vertical-align: top;
 
-        >div {
+        > div {
             // display: table-cell;
             // width: 50%;
             vertical-align: top;
@@ -58,12 +52,10 @@ body.loading {
         }
     }
 
-    .options{
+    .options {
         text-align: left;
     }
-
 }
-
 
 .original-image {
     canvas {
@@ -94,10 +86,10 @@ body.loading {
         font-size: 12px;
         text-align: center;
 
-        >span {}
+        // > span {
+        // }
 
-
-        >div {
+        > div {
             width: 70px;
             border: 1px solid;
             display: inline-block;
@@ -120,7 +112,7 @@ body.loading {
         .empty-color {
             height: 48px;
             position: relative;
-            
+
             &:after {
                 position: absolute;
                 top: 0;
@@ -129,25 +121,19 @@ body.loading {
                 right: 0;
                 content: "\274c"; /* use the hex value here... */
                 font-size: 40px;
-                color: #FFF;
+                color: #fff;
                 line-height: 48px;
                 text-align: center;
             }
         }
-        
-         
 
         .color-position {
-
-
             padding-top: 5px;
             display: table;
             table-layout: fixed;
             width: 100%;
 
-
-
-            >div {
+            > div {
                 display: table-row;
             }
 
@@ -183,16 +169,15 @@ body.loading {
         border-right: 10px solid #b5b6ac;
         background-color: rgba(255, 0, 0, 0.473) !important;
     }
-    .guide-top .color-cell{
+    .guide-top .color-cell {
         border-bottom: 10px solid #b5b6ac;
         background-color: rgba(255, 0, 0, 0.473) !important;
     }
-    &.no-colors .color-cell{
+    &.no-colors .color-cell {
         background: #fcffcb !important;
         outline: 1px dotted rgba(0, 0, 0, 0.5);
     }
 }
-
 
 .colorPreview {
     border: 1px solid lightgray;

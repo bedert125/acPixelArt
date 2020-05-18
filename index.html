@@ -1,7 +1,18 @@
 <html ng-app="PixArtApp">
 
 <head>
-    <title>PixArt App</title>
+    <title>AC Pixel Art</title>
+
+    <link rel="shortcut icon" href="img/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="img/favicon/favicon.ico" type="image/x-icon">
+    
+    <link rel="apple-touch-icon" sizes="180x180" href="img/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/favicon/favicon-16x16.png">
+    <link rel="manifest" href="img/favicon/site.webmanifest">
+    <link rel="mask-icon" href="img/favicon/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#9f00a7">
+    <meta name="theme-color" content="#ffffff">
 
     <link rel="stylesheet" href="css/app.css">
     <script src="js/plugins/jquery-3.5.0.min.js"></script>
@@ -12,7 +23,7 @@
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/angular_material/1.1.9/angular-material.min.css">
 
 
-    
+
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular-animate.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.7/angular-aria.min.js"></script>
@@ -24,7 +35,7 @@
 
     <!-- <script src="http://netbeast.github.io/colorsys/browser.js"></script>
      -->
-     <script src="js/plugins/colorconverter.js"></script>
+    <script src="js/plugins/colorconverter.js"></script>
     <script src="js/plugins/mediancut.js"></script>
 
 
@@ -136,7 +147,7 @@
                     <md-input-container>
                         <label>#RGB color</label>
                         <input ng-model="controls.background" ng-change="controls.onChangeBgColor()">
-                      </md-input-container>
+                    </md-input-container>
                 </div>
             </div>
         </div>
@@ -147,7 +158,7 @@
 
         <div class="color-panel" layout="column" flex>
             <div class="palette">
-                <div ng-repeat="itemP in palette" >
+                <div ng-repeat="itemP in palette">
                     <span>
                         {{$index+1}}
                     </span>
